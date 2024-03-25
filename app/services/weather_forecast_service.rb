@@ -13,7 +13,7 @@ class WeatherForecastService
       return cached_weather_data if cached_weather_data.present?
 
       location_data = GeocodingService.new(@api_key).get_lat_long_from_zipcode(country_code, zipcode)
-      return { error: 'Error fetching location data' } if location_data.key?(:error)
+      return location_data[:error] if location_data.key?(:error)
 
       lat = location_data[:lat]
       lon = location_data[:long]
@@ -28,7 +28,7 @@ class WeatherForecastService
       end
     rescue StandardError => e
       Rails.logger.error "Error fetching weather data: #{e.message}"
-      nil
+      raise e
     end
   end
 
@@ -51,7 +51,8 @@ class WeatherForecastService
       response = HTTParty.get("http://api.openweathermap.org/data/2.5/weather?lat=#{lat}&lon=#{lon}&appid=#{@api_key}")
       JSON.parse(response.body)
     rescue StandardError => e
-      { error: "Error fetching weather data: #{e.message}" }
+      Rails.logger.error "Error: #{e.message}"
+      raise e
     end
   end
 
